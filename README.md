@@ -48,6 +48,29 @@ pip install -r app/requirements.txt
 uvicorn app.main:app --reload
 ```
 
+## OpenAI API Key (optional)
+
+Die App kann Tickets mit OpenAI analysieren. Ohne API Key wird automatisch die lokale Analyse verwendet – die App läuft in beiden Fällen fehlerfrei.
+
+```bash
+# .env aus der Vorlage erstellen
+cp .env.example .env
+```
+
+Dann `.env` öffnen und den Key eintragen:
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+Danach Container neu starten:
+
+```bash
+docker compose up -d --build
+```
+
+**Ohne API Key:** Die lokale Keyword-Analyse übernimmt automatisch Kategorie, Priorität und Team.
+
 ## Datenspeicherung
 
 Die SQLite-Datenbank liegt unter `data/tickets.db` und wird ausserhalb des Containers gespeichert.  

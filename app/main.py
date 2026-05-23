@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 import app.database as db
 import app.analyzer as analyzer
+import app.openai_client as openai_client
 
 app = FastAPI(title="mc-support")
 
@@ -29,21 +30,34 @@ def submit_ticket(
     department: str = Form(...),
     message: str = Form(...),
 ):
-    result = analyzer.analyze(message)
-    summary = analyzer.summarize(
-        user_name, department, message,
-        result["category"], result["priority"], result["team"],
-    )
+    ai_result = openai_client.analyze(user_name, department, message)
+    if ai_result:
+        local = analyzer.analyze(message)
+        category  = ai_result["category"]
+        priority  = ai_result["priority"]
+        team      = ai_result["team"]
+        summary   = ai_result["summary"]
+        recommended_action = ai_result["recommended_action"]
+        keywords  = local["keywords"]
+    else:
+        result    = analyzer.analyze(message)
+        category  = result["category"]
+        priority  = result["priority"]
+        team      = result["team"]
+        recommended_action = result["recommended_action"]
+        keywords  = result["keywords"]
+        summary   = analyzer.summarize(user_name, department, message, category, priority, team)
+
     ticket_id = db.insert_ticket(
         user_name=user_name,
         department=department,
         message=message,
-        keywords=result["keywords"],
-        category=result["category"],
-        priority=result["priority"],
-        team=result["team"],
+        keywords=keywords,
+        category=category,
+        priority=priority,
+        team=team,
         summary=summary,
-        recommended_action=result["recommended_action"],
+        recommended_action=recommended_action,
     )
     return RedirectResponse(url=f"/support?success=1&id={ticket_id}", status_code=303)
 
