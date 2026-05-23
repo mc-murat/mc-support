@@ -2,7 +2,7 @@ import sqlite3
 from datetime import date
 from pathlib import Path
 
-DB_PATH = Path("tickets.db")
+DB_PATH = Path("data/tickets.db")
 
 VALID_STATUSES = {"Neu", "Offen", "In Bearbeitung", "Geschlossen"}
 
@@ -21,6 +21,7 @@ def _add_column(conn, column: str, definition: str):
 
 
 def init_db():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tickets (

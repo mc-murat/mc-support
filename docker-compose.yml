@@ -1,0 +1,8 @@
+services:
+  mc-support:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/project/data
+    restart: unless-stopped
