@@ -19,6 +19,11 @@ def startup():
     db.init_db()
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "mc-support"}
+
+
 @app.get("/support", response_class=HTMLResponse)
 def support_page():
     return Path("app/static/support.html").read_text(encoding="utf-8")

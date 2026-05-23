@@ -1,10 +1,23 @@
 # mc-support
 
-Internes IT-Support-Ticketsystem mit FastAPI und SQLite.
+Internes IT-Support-Ticketsystem für Mitarbeitende. Entwickelt im Rahmen von Modul 300.
 
-## Voraussetzungen
+## Features
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installiert und gestartet
+- Supportformular für Mitarbeitende (`/support`)
+- Admin-Dashboard für IT-Support (`/admin`)
+- Automatische Ticket-Analyse (lokal per Keyword oder optional via OpenAI)
+- Status-Verwaltung direkt im Admin-Dashboard
+- Datenpersistenz mit SQLite
+- Healthcheck-Endpoint (`/health`)
+- Docker-fähig
+
+## Lokale Installation (ohne Docker)
+
+```bash
+pip install -r app/requirements.txt
+uvicorn app.main:app --reload
+```
 
 ## Start mit Docker
 
@@ -12,14 +25,7 @@ Internes IT-Support-Ticketsystem mit FastAPI und SQLite.
 docker compose up -d
 ```
 
-Die App ist danach erreichbar unter:
-
-| Seite | URL |
-|---|---|
-| Supportformular | http://localhost:8000/support |
-| Admin-Dashboard | http://localhost:8000/admin |
-
-## Stop
+## Stoppen
 
 ```bash
 docker compose down
@@ -28,7 +34,7 @@ docker compose down
 ## Logs anzeigen
 
 ```bash
-# Logs live verfolgen
+# Live verfolgen
 docker compose logs -f
 
 # Nur die letzten 50 Zeilen
@@ -41,37 +47,36 @@ docker compose logs --tail 50
 docker compose up -d --build
 ```
 
-## Lokale Entwicklung (ohne Docker)
-
-```bash
-pip install -r app/requirements.txt
-uvicorn app.main:app --reload
-```
-
 ## OpenAI API Key (optional)
 
-Die App kann Tickets mit OpenAI analysieren. Ohne API Key wird automatisch die lokale Analyse verwendet – die App läuft in beiden Fällen fehlerfrei.
+Ohne API Key läuft die App weiterhin mit lokaler Keyword-Analyse.
 
 ```bash
 # .env aus der Vorlage erstellen
 cp .env.example .env
 ```
 
-Dann `.env` öffnen und den Key eintragen:
+`.env` öffnen und Key eintragen:
 
 ```
 OPENAI_API_KEY=sk-...
 ```
 
-Danach Container neu starten:
+Danach Container neu bauen:
 
 ```bash
 docker compose up -d --build
 ```
 
-**Ohne API Key:** Die lokale Keyword-Analyse übernimmt automatisch Kategorie, Priorität und Team.
+## Wichtige URLs
+
+| Seite            | URL                          |
+|------------------|------------------------------|
+| Supportformular  | http://localhost:8000/support |
+| Admin-Dashboard  | http://localhost:8000/admin   |
+| Healthcheck      | http://localhost:8000/health  |
 
 ## Datenspeicherung
 
-Die SQLite-Datenbank liegt unter `data/tickets.db` und wird ausserhalb des Containers gespeichert.  
+Die SQLite-Datenbank liegt unter `data/tickets.db` und wird ausserhalb des Containers gespeichert.
 Bei `docker compose down` bleiben alle Tickets erhalten.
