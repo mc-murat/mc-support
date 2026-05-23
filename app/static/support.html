@@ -8,51 +8,76 @@
 </head>
 <body>
 
-<header>
-  <h1>IT-Support</h1>
-</header>
+<nav class="navbar">
+  <a class="navbar-logo" href="/support">MC-SUPPORT</a>
+  <span class="navbar-divider"></span>
+  <div class="navbar-links">
+    <a href="/support" class="active">Support</a>
+    <a href="/admin">Admin</a>
+  </div>
+  <span class="navbar-right">IT Helpdesk</span>
+</nav>
 
-<main>
+<div class="container-sm">
 
-  <!-- Confirmation screen (shown after submit) -->
-  <div id="confirmation" class="card confirmation" style="display:none;">
-    <div class="confirm-icon">&#10003;</div>
-    <h2>Dein Ticket wurde erfasst.</h2>
-    <p class="ticket-id-line">Ticket-ID: <strong id="ticket-id-display">#–</strong></p>
-    <p class="confirm-sub">Die IT-Abteilung wurde informiert.<br>Du erhältst eine Rückmeldung so schnell wie möglich.</p>
-    <button class="btn-secondary" onclick="showForm()">Weitere Anfrage einreichen</button>
+  <!-- Bestätigung nach Absenden -->
+  <div id="confirmation" class="card confirmation-card" style="display:none;">
+    <div class="confirm-check">&#10003;</div>
+    <p class="confirm-title">Anfrage erfolgreich eingereicht</p>
+    <div class="confirm-ticket-id" id="ticket-id-display">#–</div>
+    <p class="confirm-message">
+      Die IT-Abteilung wurde informiert und kümmert sich um dein Anliegen.<br>
+      Halte die Ticket-ID für Rückfragen bereit.
+    </p>
+    <button class="btn btn-outline" onclick="showForm()">Neue Anfrage einreichen</button>
   </div>
 
-  <!-- Support form -->
-  <div id="form-card" class="card">
-    <h2>Neue Supportanfrage</h2>
-    <p class="form-intro">Beschreibe dein Problem so genau wie möglich. Die IT kümmert sich darum.</p>
+  <!-- Formular -->
+  <div id="form-wrapper">
 
-    <form id="support-form" action="/submit" method="post">
-      <label for="user_name">Name / Kürzel</label>
-      <input type="text" id="user_name" name="user_name"
-             placeholder="z. B. Max Muster oder MMU" required />
+    <div class="page-intro">
+      <h1>IT-Supportanfrage</h1>
+      <p>Beschreibe dein Problem so genau wie möglich. Die IT-Abteilung nimmt sich deiner Anfrage an.</p>
+    </div>
 
-      <label for="department">Abteilung</label>
-      <input type="text" id="department" name="department"
-             placeholder="z. B. Buchhaltung, HR, IT …" required />
+    <div class="card form-card">
+      <form id="support-form" action="/submit" method="post">
 
-      <label for="message">Problembeschreibung</label>
-      <textarea id="message" name="message"
-                placeholder="z. B. Ich kann mich seit heute nicht mehr mit dem VPN verbinden …"
-                required></textarea>
+        <div class="form-row-grid">
+          <div class="form-field">
+            <label for="user_name">Name / Kürzel</label>
+            <input type="text" id="user_name" name="user_name"
+                   placeholder="z. B. Max Muster oder MMU" required />
+          </div>
+          <div class="form-field">
+            <label for="department">Abteilung</label>
+            <input type="text" id="department" name="department"
+                   placeholder="z. B. Buchhaltung, HR" required />
+          </div>
+        </div>
 
-      <button type="submit">Ticket einreichen</button>
-    </form>
+        <div class="form-field">
+          <label for="message">Problembeschreibung</label>
+          <textarea id="message" name="message"
+                    placeholder="Was ist das Problem? Seit wann tritt es auf? Gibt es eine Fehlermeldung? Was hast du bereits versucht?"
+                    required></textarea>
+        </div>
+
+        <div class="form-submit">
+          <button type="submit">Ticket einreichen</button>
+        </div>
+
+      </form>
+    </div>
+
   </div>
 
-</main>
+</div>
 
 <script>
   function showForm() {
     document.getElementById("confirmation").style.display = "none";
-    document.getElementById("form-card").style.display = "block";
-    // Clear form fields
+    document.getElementById("form-wrapper").style.display = "block";
     document.getElementById("support-form").reset();
     history.replaceState(null, "", "/support");
   }
@@ -61,7 +86,7 @@
   if (params.get("success") === "1") {
     const ticketId = params.get("id") ?? "–";
     document.getElementById("ticket-id-display").textContent = "#" + ticketId;
-    document.getElementById("form-card").style.display = "none";
+    document.getElementById("form-wrapper").style.display = "none";
     document.getElementById("confirmation").style.display = "block";
   }
 </script>

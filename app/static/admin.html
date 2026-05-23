@@ -3,42 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mc-support – Admin</title>
+  <title>MC-SUPPORT Admin</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
-<header>
-  <h1>mc-support</h1>
-  <nav>
+<nav class="navbar">
+  <a class="navbar-logo" href="/support">MC-SUPPORT</a>
+  <span class="navbar-divider"></span>
+  <div class="navbar-links">
     <a href="/support">Support</a>
     <a href="/admin" class="active">Admin</a>
-  </nav>
-</header>
+  </div>
+  <span class="navbar-right">IT Dashboard</span>
+</nav>
 
-<main>
+<div class="container">
 
-  <!-- Stats -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-value" id="stat-open">–</div>
-      <div class="stat-label">Offene Tickets</div>
+  <!-- KPI Cards -->
+  <div class="dashboard-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Offene Tickets</div>
+      <div class="kpi-value" id="stat-open">–</div>
     </div>
-    <div class="stat-card stat-high">
-      <div class="stat-value" id="stat-high">–</div>
-      <div class="stat-label">Hohe Priorität</div>
+    <div class="kpi-card">
+      <div class="kpi-label">Hohe Priorität</div>
+      <div class="kpi-value" id="stat-high">–</div>
     </div>
-    <div class="stat-card stat-today">
-      <div class="stat-value" id="stat-today">–</div>
-      <div class="stat-label">Heute erstellt</div>
+    <div class="kpi-card">
+      <div class="kpi-label">In Bearbeitung</div>
+      <div class="kpi-value" id="stat-wip">–</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Heute erstellt</div>
+      <div class="kpi-value" id="stat-today">–</div>
     </div>
   </div>
 
-  <!-- Ticket list -->
-  <div class="card">
+  <!-- Ticketliste -->
+  <div class="card table-card">
     <div class="card-header">
-      <h2>Ticketliste</h2>
-      <button class="btn-refresh" onclick="loadAll()">&#8635; Aktualisieren</button>
+      <div>
+        <h2>Tickets</h2>
+        <p class="card-sub">Zeile anklicken, um Details anzuzeigen</p>
+      </div>
+      <button class="btn btn-outline" onclick="loadAll()">Aktualisieren</button>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <select class="filter-select" id="filter-status" onchange="applyFilters()">
+        <option value="">Alle Status</option>
+        <option>Neu</option>
+        <option>Offen</option>
+        <option>In Bearbeitung</option>
+        <option>Geschlossen</option>
+      </select>
+      <select class="filter-select" id="filter-priority" onchange="applyFilters()">
+        <option value="">Alle Prioritäten</option>
+        <option>Hoch</option>
+        <option>Mittel</option>
+        <option>Niedrig</option>
+      </select>
+      <button class="filter-reset-btn" onclick="resetFilters()">Zurücksetzen</button>
     </div>
 
     <div class="table-wrap">
@@ -50,72 +78,107 @@
             <th>Abteilung</th>
             <th>Kategorie</th>
             <th>Priorität</th>
-            <th>Team</th>
             <th>Status</th>
+            <th>Team</th>
             <th>Erstellt</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="ticket-body">
-          <tr><td colspan="8" class="empty">Lade Tickets…</td></tr>
+          <tr><td colspan="9" class="table-empty">Lade Tickets…</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Ticket detail panel -->
+  <!-- Detail Panel -->
   <div id="detail-panel" class="card detail-panel" style="display:none;">
     <div class="card-header">
-      <h2>Ticket <span id="detail-id"></span></h2>
-      <button class="btn-close" onclick="closeDetail()">&#x2715;</button>
+      <div>
+        <h2>Ticket <span id="detail-id"></span></h2>
+        <p class="card-sub">Erstellt: <span id="detail-created"></span></p>
+      </div>
+      <button class="btn btn-ghost" onclick="closeDetail()">Schliessen</button>
     </div>
 
-    <div class="detail-grid">
+    <div class="detail-body">
+
+      <!-- Originalmeldung -->
       <div class="detail-section">
-        <h3>Originalmeldung</h3>
-        <p id="detail-message" class="detail-message-text"></p>
+        <div class="detail-section-label">Originalmeldung</div>
+        <p id="detail-message" class="detail-text-box"></p>
       </div>
 
-      <div class="detail-section">
-        <h3>Analyse</h3>
-        <table class="detail-table">
-          <tr><th>Erkannte Keywords</th><td id="detail-keywords"></td></tr>
-          <tr><th>AI-Kategorie</th>      <td id="detail-category"></td></tr>
-          <tr><th>Priorität</th>         <td id="detail-priority"></td></tr>
-          <tr><th>Zuständiges Team</th>  <td id="detail-team"></td></tr>
-        </table>
-      </div>
+      <!-- Analyse + Status -->
+      <div class="detail-two-col">
 
-      <div class="detail-section">
-        <h3>Zusammenfassung</h3>
-        <p id="detail-summary" class="detail-summary-text"></p>
-      </div>
-
-      <div class="detail-section">
-        <h3>Empfohlene Aktion</h3>
-        <p id="detail-action" class="detail-action-text"></p>
-      </div>
-
-      <div class="detail-section">
-        <h3>Status ändern</h3>
-        <div class="status-form">
-          <select id="detail-status-select" class="status-select"></select>
-          <button class="btn-save" onclick="saveStatus()">Status speichern</button>
+        <div class="detail-section">
+          <div class="detail-section-label">Analyse</div>
+          <div class="detail-meta-list">
+            <div class="detail-meta-row">
+              <span class="detail-meta-key">Keywords</span>
+              <span id="detail-keywords"></span>
+            </div>
+            <div class="detail-meta-row">
+              <span class="detail-meta-key">Kategorie</span>
+              <span id="detail-category"></span>
+            </div>
+            <div class="detail-meta-row">
+              <span class="detail-meta-key">Priorität</span>
+              <span id="detail-priority"></span>
+            </div>
+            <div class="detail-meta-row">
+              <span class="detail-meta-key">Team</span>
+              <span id="detail-team"></span>
+            </div>
+          </div>
         </div>
-        <p id="save-feedback" class="save-feedback" style="display:none;"></p>
+
+        <div class="detail-section">
+          <div class="detail-section-label">Status anpassen</div>
+          <div class="status-row">
+            <select id="detail-status-select" class="status-select"></select>
+            <button class="btn btn-primary" onclick="saveStatus()">Speichern</button>
+          </div>
+          <p id="save-feedback" class="save-feedback" style="display:none;"></p>
+        </div>
+
       </div>
+
+      <!-- Zusammenfassung + Empfohlene Aktion -->
+      <div class="detail-two-col">
+
+        <div class="detail-section">
+          <div class="detail-section-label">Zusammenfassung</div>
+          <p id="detail-summary" class="detail-text-box"></p>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-label">Empfohlene Aktion</div>
+          <p id="detail-action" class="detail-text-box detail-action-box"></p>
+        </div>
+
+      </div>
+
     </div>
   </div>
 
-</main>
+</div>
 
 <script>
-  const STATUSES   = ["Neu", "Offen", "In Bearbeitung", "Geschlossen"];
-  const BADGE_MAP  = { "Hoch": "badge-hoch", "Mittel": "badge-mittel", "Niedrig": "badge-niedrig" };
-  const STATUS_MAP = { "Neu": "status-neu", "Offen": "status-offen", "In Bearbeitung": "status-in-bearbeitung", "Geschlossen": "status-geschlossen" };
+  const STATUSES  = ["Neu", "Offen", "In Bearbeitung", "Geschlossen"];
+  const BADGE_MAP = { Hoch: "badge-hoch", Mittel: "badge-mittel", Niedrig: "badge-niedrig" };
+  const STATUS_MAP = {
+    "Neu":            "status-neu",
+    "Offen":          "status-offen",
+    "In Bearbeitung": "status-in-bearbeitung",
+    "Geschlossen":    "status-geschlossen"
+  };
 
+  let allTickets      = [];
   let currentTicketId = null;
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
+  // Stats ──────────────────────────────────────────────────────────────────
   async function loadStats() {
     const res  = await fetch("/api/stats");
     const data = await res.json();
@@ -124,86 +187,81 @@
     document.getElementById("stat-today").textContent = data.today;
   }
 
-  // ── Ticket list ────────────────────────────────────────────────────────────
-  async function loadTickets() {
-    const res     = await fetch("/api/tickets");
-    const tickets = await res.json();
-    const tbody   = document.getElementById("ticket-body");
-
-    if (tickets.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">Noch keine Tickets vorhanden.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = tickets.map(t => `
-      <tr class="ticket-row" onclick="showDetail(${t.id})" title="Details anzeigen">
-        <td><strong>#${t.id}</strong></td>
-        <td>${esc(t.user_name || t.name || "–")}</td>
-        <td>${esc(t.department || "–")}</td>
-        <td>${esc(t.category)}</td>
-        <td><span class="badge ${BADGE_MAP[t.priority] ?? ''}">${esc(t.priority)}</span></td>
-        <td>${esc(t.team)}</td>
-        <td><span class="status-pill ${STATUS_MAP[t.status] ?? ''}">${esc(t.status)}</span></td>
-        <td class="col-date">${esc((t.created_at || "").slice(0, 16))}</td>
-      </tr>
-    `).join("");
+  function updateWip() {
+    document.getElementById("stat-wip").textContent =
+      allTickets.filter(t => t.status === "In Bearbeitung").length;
   }
 
-  // ── Detail panel ──────────────────────────────────────────────────────────
-  let allTickets = [];
-
-  async function loadAll() {
-    await Promise.all([loadStats(), loadTicketsIntoCache()]);
-  }
-
+  // Tickets ─────────────────────────────────────────────────────────────────
   async function loadTicketsIntoCache() {
-    const res   = await fetch("/api/tickets");
-    allTickets  = await res.json();
-    renderTable(allTickets);
+    const res  = await fetch("/api/tickets");
+    allTickets = await res.json();
+    updateWip();
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const status   = document.getElementById("filter-status").value;
+    const priority = document.getElementById("filter-priority").value;
+    const filtered = allTickets.filter(t =>
+      (!status   || t.status   === status) &&
+      (!priority || t.priority === priority)
+    );
+    renderTable(filtered);
+  }
+
+  function resetFilters() {
+    document.getElementById("filter-status").value   = "";
+    document.getElementById("filter-priority").value = "";
+    applyFilters();
   }
 
   function renderTable(tickets) {
     const tbody = document.getElementById("ticket-body");
-    if (tickets.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">Noch keine Tickets vorhanden.</td></tr>';
+    if (!tickets.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="table-empty">Keine Tickets gefunden.</td></tr>';
       return;
     }
     tbody.innerHTML = tickets.map(t => `
-      <tr class="ticket-row ${currentTicketId === t.id ? 'row-selected' : ''}"
-          onclick="showDetail(${t.id})" title="Details anzeigen">
-        <td><strong>#${t.id}</strong></td>
+      <tr class="ticket-row ${currentTicketId === t.id ? "row-selected" : ""}" onclick="showDetail(${t.id})">
+        <td class="col-id">#${t.id}</td>
         <td>${esc(t.user_name || t.name || "–")}</td>
         <td>${esc(t.department || "–")}</td>
         <td>${esc(t.category)}</td>
-        <td><span class="badge ${BADGE_MAP[t.priority] ?? ''}">${esc(t.priority)}</span></td>
+        <td><span class="badge ${BADGE_MAP[t.priority] || ""}">${esc(t.priority)}</span></td>
+        <td><span class="status-pill ${STATUS_MAP[t.status] || ""}">${esc(t.status)}</span></td>
         <td>${esc(t.team)}</td>
-        <td><span class="status-pill ${STATUS_MAP[t.status] ?? ''}">${esc(t.status)}</span></td>
         <td class="col-date">${esc((t.created_at || "").slice(0, 16))}</td>
+        <td>
+          <button class="btn-link-inline" onclick="event.stopPropagation(); showDetail(${t.id})">
+            Details
+          </button>
+        </td>
       </tr>
     `).join("");
   }
 
+  // Detail panel ────────────────────────────────────────────────────────────
   function showDetail(id) {
     const t = allTickets.find(x => x.id === id);
     if (!t) return;
     currentTicketId = id;
 
-    document.getElementById("detail-id").textContent        = "#" + t.id;
-    document.getElementById("detail-message").textContent   = t.message;
-    document.getElementById("detail-keywords").textContent  = t.keywords || "–";
-    document.getElementById("detail-category").textContent  = t.category;
-    document.getElementById("detail-priority").innerHTML    =
-      `<span class="badge ${BADGE_MAP[t.priority] ?? ''}">${esc(t.priority)}</span>`;
-    document.getElementById("detail-team").textContent      = t.team;
-    document.getElementById("detail-summary").textContent   = t.summary || "–";
-    document.getElementById("detail-action").textContent    = t.recommended_action || "–";
+    document.getElementById("detail-id").textContent      = "#" + t.id;
+    document.getElementById("detail-created").textContent = (t.created_at || "").slice(0, 16);
+    document.getElementById("detail-message").textContent = t.message;
+    document.getElementById("detail-keywords").textContent = t.keywords || "–";
+    document.getElementById("detail-category").textContent = t.category;
+    document.getElementById("detail-priority").innerHTML  =
+      `<span class="badge ${BADGE_MAP[t.priority] || ""}">${esc(t.priority)}</span>`;
+    document.getElementById("detail-team").textContent    = t.team;
+    document.getElementById("detail-summary").textContent = t.summary || "–";
+    document.getElementById("detail-action").textContent  = t.recommended_action || "–";
 
     const sel = document.getElementById("detail-status-select");
     sel.innerHTML = STATUSES.map(s =>
       `<option value="${s}" ${s === t.status ? "selected" : ""}>${s}</option>`
     ).join("");
-    sel.className = `status-select ${STATUS_MAP[t.status] ?? ''}`;
-    sel.onchange  = () => { sel.className = `status-select ${STATUS_MAP[sel.value] ?? ''}`; };
 
     document.getElementById("save-feedback").style.display = "none";
 
@@ -211,13 +269,13 @@
     panel.style.display = "block";
     panel.scrollIntoView({ behavior: "smooth", block: "start" });
 
-    renderTable(allTickets); // highlight selected row
+    applyFilters();
   }
 
   function closeDetail() {
     document.getElementById("detail-panel").style.display = "none";
     currentTicketId = null;
-    renderTable(allTickets);
+    applyFilters();
   }
 
   async function saveStatus() {
@@ -232,24 +290,29 @@
       });
       if (!res.ok) throw new Error();
 
-      // Update local cache so table re-render reflects new status
       const t = allTickets.find(x => x.id === currentTicketId);
       if (t) t.status = newStatus;
-      renderTable(allTickets);
 
-      feedback.textContent     = "✓ Status gespeichert.";
-      feedback.className       = "save-feedback save-ok";
-      feedback.style.display   = "block";
+      updateWip();
       loadStats();
+      applyFilters();
+
+      feedback.textContent   = "Status wurde gespeichert.";
+      feedback.className     = "save-feedback save-ok";
+      feedback.style.display = "block";
     } catch {
-      feedback.textContent   = "Fehler beim Speichern. Bitte erneut versuchen.";
+      feedback.textContent   = "Fehler beim Speichern.";
       feedback.className     = "save-feedback save-err";
       feedback.style.display = "block";
     }
   }
 
-  function esc(str) {
-    return String(str ?? "")
+  async function loadAll() {
+    await Promise.all([loadStats(), loadTicketsIntoCache()]);
+  }
+
+  function esc(s) {
+    return String(s ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
