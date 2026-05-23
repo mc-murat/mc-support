@@ -18,9 +18,10 @@ _SYSTEM_PROMPT = """Du bist ein IT-Support-Assistent. Analysiere die folgende Su
 - priority: Genau eines von "Hoch", "Mittel" oder "Niedrig"
 - team: Zuständiges Team (z.B. "IAM-Team", "Netzwerk-Team", "Workplace-Team", "Support-Team")
 - summary: Ein Satz, der das Problem zusammenfasst
-- recommended_action: Konkrete Handlungsempfehlung für den IT-Support"""
+- recommended_action: Konkrete Handlungsempfehlung für den IT-Support
+- solution_steps: Ein JSON-Objekt (als String) mit den Feldern "cause" (mögliche Ursache, ein Satz), "steps" (Array von konkreten Prüfschritten, ohne Nummerierung), "action" (empfohlene Erstaktion, ein Satz). Beispiel: {"cause": "...", "steps": ["Schritt 1", "Schritt 2"], "action": "..."}"""
 
-_REQUIRED_KEYS = {"category", "priority", "team", "summary", "recommended_action"}
+_REQUIRED_KEYS = {"category", "priority", "team", "summary", "recommended_action", "solution_steps"}
 _VALID_PRIORITIES = {"Hoch", "Mittel", "Niedrig"}
 
 
@@ -40,7 +41,7 @@ def analyze(user_name: str, department: str, message: str) -> dict | None:
                 {"role": "user", "content": user_content},
             ],
             temperature=0,
-            max_tokens=300,
+            max_tokens=600,
         )
 
         raw = response.choices[0].message.content.strip()

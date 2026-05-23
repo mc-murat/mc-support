@@ -17,6 +17,7 @@ Nicht eingeloggte Benutzer werden automatisch zu `/login` weitergeleitet.
 - Supportformular für Mitarbeitende (`/support`)
 - Admin-Dashboard für IT-Support (`/admin`)
 - Automatische Ticket-Analyse (lokal per Keyword oder optional via OpenAI)
+- **Knowledge Base**: lokale Lösungsvorschläge für VPN, Outlook, Passwort, Drucker, Teams
 - Status-Verwaltung direkt im Admin-Dashboard
 - Datenpersistenz mit SQLite
 - Healthcheck-Endpoint (`/health`)
@@ -85,6 +86,52 @@ docker compose up -d --build
 | Supportformular  | http://localhost:8000/support |
 | Admin-Dashboard  | http://localhost:8000/admin   |
 | Healthcheck      | http://localhost:8000/health  |
+
+## Analytics Dashboard
+
+Das Analytics Dashboard ist **ausschliesslich für die Rolle `admin`** sichtbar. Support-Benutzer sehen die Ticketliste, aber keinen Analytics-Bereich. Der Endpoint `GET /api/analytics` gibt bei Support-Rolle `403 Forbidden` zurück.
+
+**Kennzahlen (KPI-Leiste):**
+
+| KPI                  | Beschreibung                                              |
+|----------------------|-----------------------------------------------------------|
+| Gesamt               | Gesamtanzahl aller Tickets                                |
+| Abschlussquote       | Anteil geschlossener Tickets in %                         |
+| Hohe Priorität       | Anteil Tickets mit Priorität "Hoch" in %                  |
+| Top Kategorie        | Häufigste Problemkategorie                                |
+| Top Team             | Meistbelastetes Support-Team                              |
+
+**Charts (Chart.js via CDN):**
+
+| Diagramm                        | Typ                  | Beschreibung                                   |
+|---------------------------------|----------------------|------------------------------------------------|
+| Tickets nach Status             | Donut Chart          | Neu / Offen / In Bearbeitung / Geschlossen     |
+| Tickets nach Priorität          | Donut Chart          | Hoch / Mittel / Niedrig                        |
+| Tickets nach Kategorie          | Horizontaler Balken  | Häufigste Problemkategorien                    |
+| Auslastung pro Team             | Horizontaler Balken  | Ticket-Volumen je Support-Team                 |
+| Ticket-Aufkommen (14 Tage)      | Liniendiagramm       | Täglicher Eingang der letzten zwei Wochen      |
+
+Daten werden direkt aus SQLite berechnet (`GET /api/analytics`). Kein Backend-Service nötig.
+
+## Knowledge Base
+
+Für jedes Ticket werden automatisch Lösungsschritte generiert, basierend auf den erkannten Keywords.
+
+**Lokale Vorlagen (immer verfügbar):**
+
+| Kategorie | Keywords |
+|-----------|----------|
+| VPN       | vpn, cisco, tunnel |
+| Outlook   | outlook, mail, e-mail, postfach |
+| Passwort  | passwort, password, gesperrt, login |
+| Drucker   | drucker, drucken |
+| Teams     | teams, meeting, besprechung |
+| Allgemein | (Fallback für alle anderen Fälle) |
+
+Jede Vorlage enthält mögliche Ursache, konkrete Prüfschritte und eine empfohlene Erstaktion.  
+Falls OpenAI aktiviert ist, werden die Lösungsschritte durch die KI optimiert.
+
+Die Lösungsvorschläge sind nur im Admin-Dashboard sichtbar (nicht im Supportformular).
 
 ## File Upload
 

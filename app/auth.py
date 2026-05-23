@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 
 ALL_ROLES    = {"user", "support", "admin"}
 ADMIN_ROLES  = {"support", "admin"}
+ONLY_ADMIN   = {"admin"}
 
 
 def hash_password(plain: str) -> str:

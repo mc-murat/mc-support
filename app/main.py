@@ -11,6 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 import app.database as db
 import app.analyzer as analyzer
 import app.openai_client as openai_client
+import app.knowledge_base as knowledge_base
 import app.auth as auth
 
 app = FastAPI(title="mc-support")
@@ -122,21 +123,23 @@ async def submit_ticket(
     # ── Ticket analysis ──────────────────────────────────────────────────────
     ai_result = openai_client.analyze(user_name, department, message)
     if ai_result:
-        local     = analyzer.analyze(message)
-        category  = ai_result["category"]
-        priority  = ai_result["priority"]
-        team      = ai_result["team"]
-        summary   = ai_result["summary"]
+        local          = analyzer.analyze(message)
+        category       = ai_result["category"]
+        priority       = ai_result["priority"]
+        team           = ai_result["team"]
+        summary        = ai_result["summary"]
         recommended_action = ai_result["recommended_action"]
-        keywords  = local["keywords"]
+        keywords       = local["keywords"]
+        solution_steps = ai_result.get("solution_steps") or knowledge_base.get_solution(keywords)
     else:
-        result    = analyzer.analyze(message)
-        category  = result["category"]
-        priority  = result["priority"]
-        team      = result["team"]
+        result         = analyzer.analyze(message)
+        category       = result["category"]
+        priority       = result["priority"]
+        team           = result["team"]
         recommended_action = result["recommended_action"]
-        keywords  = result["keywords"]
-        summary   = analyzer.summarize(user_name, department, message, category, priority, team)
+        keywords       = result["keywords"]
+        summary        = analyzer.summarize(user_name, department, message, category, priority, team)
+        solution_steps = knowledge_base.get_solution(keywords)
 
     ticket_id = db.insert_ticket(
         user_name=user_name,
@@ -150,6 +153,7 @@ async def submit_ticket(
         recommended_action=recommended_action,
         attachment_filename=attachment_filename,
         attachment_path=attachment_path,
+        solution_steps=solution_steps,
     )
     return RedirectResponse(url=f"/support?success=1&id={ticket_id}", status_code=303)
 
@@ -186,6 +190,12 @@ def get_tickets(request: Request):
 def get_stats(request: Request):
     auth.api_require_roles(request, auth.ADMIN_ROLES)
     return db.get_stats()
+
+
+@app.get("/api/analytics")
+def get_analytics(request: Request):
+    auth.api_require_roles(request, auth.ONLY_ADMIN)
+    return db.get_analytics()
 
 
 class StatusUpdate(BaseModel):

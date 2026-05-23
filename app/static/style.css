@@ -610,6 +610,139 @@ table tbody td {
   border-color: #fde68a;
 }
 
+.solution-body {
+  font-size: 0.82rem;
+  color: #374151;
+  line-height: 1.65;
+}
+
+.solution-cause {
+  margin-bottom: 10px;
+}
+
+.solution-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.solution-steps-list {
+  margin: 0 0 10px 1.4rem;
+  padding: 0;
+}
+
+.solution-steps-list li {
+  margin-bottom: 3px;
+}
+
+.solution-action {
+  margin-top: 2px;
+  padding: 8px 12px;
+  background: #fffbeb;
+  border-left: 3px solid #fde68a;
+  border-radius: 4px;
+}
+
+/* ── Analytics ──────────────────────────────────────────────────────────── */
+#analytics-section {
+  margin-top: 1.5rem;
+}
+
+/* KPI strip */
+.akpi-row {
+  display: flex;
+  gap: 1px;
+  background: #e2e8f0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 1rem 0 1.5rem;
+}
+
+.akpi-item {
+  flex: 1;
+  background: #fff;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.akpi-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.akpi-value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.akpi-value.akpi-warn { color: #ef4444; }
+
+.akpi-value.akpi-text {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  line-height: 1.3;
+  padding-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Charts grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+  padding-bottom: 0.5rem;
+}
+
+.chart-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem 1.1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chart-panel-full {
+  grid-column: 1 / -1;
+}
+
+.chart-panel-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+}
+
+.chart-desc {
+  font-size: 0.71rem;
+  color: #94a3b8;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 220px;
+}
+
+.chart-wrap-line {
+  height: 175px;
+}
+
 .detail-meta-list {
   display: flex;
   flex-direction: column;

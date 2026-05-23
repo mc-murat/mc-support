@@ -76,6 +76,7 @@ def init_db():
     _add_column(conn, "created_at",           "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime'))")
     _add_column(conn, "attachment_filename",  "TEXT NOT NULL DEFAULT ''")
     _add_column(conn, "attachment_path",      "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "solution_steps",       "TEXT NOT NULL DEFAULT ''")
     conn.commit()
     conn.close()
 
@@ -92,20 +93,22 @@ def insert_ticket(
     recommended_action: str,
     attachment_filename: str = "",
     attachment_path: str = "",
+    solution_steps: str = "",
 ) -> int:
     conn = get_connection()
     cur = conn.execute(
         """INSERT INTO tickets
            (user_name, department, message, keywords, category, priority,
             team, summary, recommended_action, status,
-            attachment_filename, attachment_path)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Neu', ?, ?)""",
+            attachment_filename, attachment_path, solution_steps)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Neu', ?, ?, ?)""",
         (
             user_name, department, message,
             ", ".join(keywords),
             category, priority, team,
             summary, recommended_action,
             attachment_filename, attachment_path,
+            solution_steps,
         ),
     )
     ticket_id = cur.lastrowid
@@ -128,6 +131,48 @@ def get_all_tickets() -> list[dict]:
     rows = conn.execute("SELECT * FROM tickets ORDER BY id DESC").fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+def get_analytics() -> dict:
+    conn = get_connection()
+
+    def group_by(col: str) -> list[dict]:
+        rows = conn.execute(
+            f"SELECT {col}, COUNT(*) as count FROM tickets GROUP BY {col} ORDER BY count DESC"
+        ).fetchall()
+        return [{"label": r[0] or "–", "count": r[1]} for r in rows]
+
+    by_day_rows = conn.execute(
+        """SELECT DATE(created_at) as day, COUNT(*) as count
+           FROM tickets
+           WHERE created_at >= DATE('now', '-13 days')
+           GROUP BY day
+           ORDER BY day"""
+    ).fetchall()
+    by_day = [{"label": r[0], "count": r[1]} for r in by_day_rows]
+
+    total    = conn.execute("SELECT COUNT(*) FROM tickets").fetchone()[0]
+    closed   = conn.execute("SELECT COUNT(*) FROM tickets WHERE status = 'Geschlossen'").fetchone()[0]
+    high     = conn.execute("SELECT COUNT(*) FROM tickets WHERE priority = 'Hoch'").fetchone()[0]
+    top_cat  = conn.execute("SELECT category FROM tickets GROUP BY category ORDER BY COUNT(*) DESC LIMIT 1").fetchone()
+    top_team = conn.execute("SELECT team     FROM tickets GROUP BY team     ORDER BY COUNT(*) DESC LIMIT 1").fetchone()
+
+    result = {
+        "summary": {
+            "total":         total,
+            "closed":        closed,
+            "high_priority": high,
+            "top_category":  top_cat[0]  if top_cat  else None,
+            "top_team":      top_team[0] if top_team else None,
+        },
+        "by_category": group_by("category"),
+        "by_priority": group_by("priority"),
+        "by_status":   group_by("status"),
+        "by_team":     group_by("team"),
+        "by_day":      by_day,
+    }
+    conn.close()
+    return result
 
 
 def get_stats() -> dict:

@@ -170,11 +170,90 @@
 
       </div>
 
+      <!-- Lösungsvorschlag -->
+      <div class="detail-section" id="detail-solution-section" style="display:none;">
+        <div class="detail-section-label">Lösungsvorschlag</div>
+        <div id="detail-solution-body" class="solution-body"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Analytics (nur für admin-Rolle) -->
+  <div id="analytics-section" style="display:none;">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>Analytics</h2>
+          <p class="card-sub">Betriebsübersicht — nur für Administratoren</p>
+        </div>
+        <button class="btn btn-outline" onclick="loadAnalytics()">Aktualisieren</button>
+      </div>
+
+      <!-- KPI Strip -->
+      <div class="akpi-row">
+        <div class="akpi-item">
+          <div class="akpi-label">Gesamt</div>
+          <div class="akpi-value" id="akpi-total">–</div>
+        </div>
+        <div class="akpi-item">
+          <div class="akpi-label">Abschlussquote</div>
+          <div class="akpi-value" id="akpi-closed-pct">–</div>
+        </div>
+        <div class="akpi-item">
+          <div class="akpi-label">Hohe Priorität</div>
+          <div class="akpi-value akpi-warn" id="akpi-high-pct">–</div>
+        </div>
+        <div class="akpi-item">
+          <div class="akpi-label">Top Kategorie</div>
+          <div class="akpi-value akpi-text" id="akpi-top-cat">–</div>
+        </div>
+        <div class="akpi-item">
+          <div class="akpi-label">Top Team</div>
+          <div class="akpi-value akpi-text" id="akpi-top-team">–</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+
+        <div class="chart-panel">
+          <div class="chart-panel-title">Tickets nach Status</div>
+          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+          <p class="chart-desc">Verhältnis offener, laufender und abgeschlossener Tickets.</p>
+        </div>
+
+        <div class="chart-panel">
+          <div class="chart-panel-title">Tickets nach Priorität</div>
+          <div class="chart-wrap"><canvas id="chart-priority"></canvas></div>
+          <p class="chart-desc">Anteil kritischer, mittlerer und niedriger Dringlichkeit.</p>
+        </div>
+
+        <div class="chart-panel">
+          <div class="chart-panel-title">Tickets nach Kategorie</div>
+          <div class="chart-wrap"><canvas id="chart-category"></canvas></div>
+          <p class="chart-desc">Häufigste Problemkategorien im IT-Support.</p>
+        </div>
+
+        <div class="chart-panel">
+          <div class="chart-panel-title">Auslastung pro Team</div>
+          <div class="chart-wrap"><canvas id="chart-team"></canvas></div>
+          <p class="chart-desc">Ticket-Volumen je zuständigem Support-Team.</p>
+        </div>
+
+        <div class="chart-panel chart-panel-full">
+          <div class="chart-panel-title">Ticket-Aufkommen — letzte 14 Tage</div>
+          <div class="chart-wrap chart-wrap-line"><canvas id="chart-day"></canvas></div>
+          <p class="chart-desc">Täglicher Eingang über die letzten zwei Wochen.</p>
+        </div>
+
+      </div>
     </div>
   </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 <script>
   const STATUSES  = ["Neu", "Offen", "In Bearbeitung", "Geschlossen"];
   const BADGE_MAP = { Hoch: "badge-hoch", Mittel: "badge-mittel", Niedrig: "badge-niedrig" };
@@ -284,6 +363,26 @@
       attachSection.style.display = "none";
     }
 
+    const solutionSection = document.getElementById("detail-solution-section");
+    const solutionBody    = document.getElementById("detail-solution-body");
+    const raw = (t.solution_steps || "").trim();
+    if (raw) {
+      try {
+        const sol = JSON.parse(raw);
+        const stepsHtml = (sol.steps || []).map(s => `<li>${esc(s)}</li>`).join("");
+        solutionBody.innerHTML =
+          `<p class="solution-cause"><strong>Mögliche Ursache:</strong> ${esc(sol.cause || "")}</p>` +
+          (stepsHtml ? `<p class="solution-label">Prüfschritte:</p><ol class="solution-steps-list">${stepsHtml}</ol>` : "") +
+          (sol.action ? `<p class="solution-action"><strong>Empfohlene Erstaktion:</strong> ${esc(sol.action)}</p>` : "");
+      } catch {
+        // fallback for old plain-text tickets
+        solutionBody.innerHTML = `<p class="detail-text-box">${esc(raw)}</p>`;
+      }
+      solutionSection.style.display = "block";
+    } else {
+      solutionSection.style.display = "none";
+    }
+
     document.getElementById("save-feedback").style.display = "none";
 
     const panel = document.getElementById("detail-panel");
@@ -339,8 +438,135 @@
       .replace(/>/g, "&gt;");
   }
 
+  // Analytics (nur admin) ─────────────────────────────────────────────────
+
+  const _charts = {};
+
+  const STATUS_COLORS = {
+    'Neu':            '#3b82f6',
+    'Offen':          '#f59e0b',
+    'In Bearbeitung': '#8b5cf6',
+    'Geschlossen':    '#10b981',
+  };
+  const PRIO_COLORS = {
+    'Hoch':    '#ef4444',
+    'Mittel':  '#f59e0b',
+    'Niedrig': '#10b981',
+  };
+  const BAR_PALETTE = ['#1e3a5f','#2563eb','#0ea5e9','#06b6d4','#10b981','#84cc16','#f59e0b','#ef4444'];
+
+  function destroyChart(id) {
+    if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+  }
+
+  function buildDonut(id, items, colorMap) {
+    destroyChart(id);
+    if (!items || !items.length) return;
+    const labels = items.map(i => i.label);
+    _charts[id] = new Chart(document.getElementById(id), {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data:            items.map(i => i.count),
+          backgroundColor: labels.map(l => colorMap[l] || '#94a3b8'),
+          borderColor:     '#fff',
+          borderWidth:     2,
+          hoverOffset:     6,
+        }],
+      },
+      options: {
+        cutout: '62%',
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 12 } },
+        },
+      },
+    });
+  }
+
+  function buildHBar(id, items, colors) {
+    destroyChart(id);
+    if (!items || !items.length) return;
+    const bg = Array.isArray(colors)
+      ? items.map((_, i) => colors[i % colors.length])
+      : colors;
+    _charts[id] = new Chart(document.getElementById(id), {
+      type: 'bar',
+      data: {
+        labels: items.map(i => i.label),
+        datasets: [{ data: items.map(i => i.count), backgroundColor: bg, borderRadius: 3 }],
+      },
+      options: {
+        indexAxis: 'y',
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+          y: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+  }
+
+  function buildLine(id, items) {
+    destroyChart(id);
+    if (!items || !items.length) return;
+    _charts[id] = new Chart(document.getElementById(id), {
+      type: 'line',
+      data: {
+        labels: items.map(i => i.label.slice(5)),
+        datasets: [{
+          data:                 items.map(i => i.count),
+          borderColor:          '#1e3a5f',
+          backgroundColor:      'rgba(30,58,95,0.07)',
+          pointBackgroundColor: '#1e3a5f',
+          pointRadius:          4,
+          pointHoverRadius:     6,
+          tension:              0.35,
+          fill:                 true,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+  }
+
+  async function loadAnalytics() {
+    try {
+      const res = await fetch('/api/analytics');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const total  = data.summary.total;
+      const closed = data.summary.closed;
+      const high   = data.summary.high_priority;
+      document.getElementById('akpi-total').textContent      = total;
+      document.getElementById('akpi-closed-pct').textContent = total ? Math.round(closed / total * 100) + ' %' : '0 %';
+      document.getElementById('akpi-high-pct').textContent   = total ? Math.round(high   / total * 100) + ' %' : '0 %';
+      document.getElementById('akpi-top-cat').textContent    = data.summary.top_category || '–';
+      document.getElementById('akpi-top-team').textContent   = data.summary.top_team     || '–';
+
+      buildDonut('chart-status',   data.by_status,   STATUS_COLORS);
+      buildDonut('chart-priority', data.by_priority, PRIO_COLORS);
+      buildHBar('chart-category',  data.by_category, BAR_PALETTE);
+      buildHBar('chart-team',      data.by_team,     '#1e3a5f');
+      buildLine('chart-day',       data.by_day);
+    } catch { /* analytics ist optional — Fehler still ignorieren */ }
+  }
+
   fetch("/api/me").then(r => r.json()).then(u => {
     document.getElementById("navbar-user").textContent = u.username + " (" + u.role + ")";
+    if (u.role === "admin") {
+      document.getElementById("analytics-section").style.display = "block";
+      setTimeout(loadAnalytics, 0);
+    }
   }).catch(() => {});
 
   loadAll();
