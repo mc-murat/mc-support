@@ -86,6 +86,16 @@ docker compose up -d --build
 | Admin-Dashboard  | http://localhost:8000/admin   |
 | Healthcheck      | http://localhost:8000/health  |
 
+## File Upload
+
+Mitarbeitende können optional einen Anhang zum Ticket hochladen (z. B. Screenshot, Logdatei).
+
+**Erlaubte Dateitypen:** PNG, JPG, JPEG, PDF, TXT, LOG  
+**Maximale Dateigrösse:** 10 MB
+
+Hochgeladene Dateien werden im Ordner `uploads/` gespeichert und bleiben nach Container-Neustarts erhalten.  
+Der Download-Link ist im Admin-Dashboard in den Ticket-Details sichtbar (nur für eingeloggte Benutzer).
+
 ## Datenspeicherung
 
 Die SQLite-Datenbank liegt unter `data/tickets.db` und wird ausserhalb des Containers gespeichert.

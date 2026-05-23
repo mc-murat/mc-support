@@ -69,11 +69,13 @@ def init_db():
         )
     """)
     # Migrations for databases created with the old schema
-    _add_column(conn, "user_name",          "TEXT NOT NULL DEFAULT ''")
-    _add_column(conn, "department",         "TEXT NOT NULL DEFAULT ''")
-    _add_column(conn, "keywords",           "TEXT NOT NULL DEFAULT ''")
-    _add_column(conn, "recommended_action", "TEXT NOT NULL DEFAULT ''")
-    _add_column(conn, "created_at",         "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime'))")
+    _add_column(conn, "user_name",            "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "department",           "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "keywords",             "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "recommended_action",   "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "created_at",           "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime'))")
+    _add_column(conn, "attachment_filename",  "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "attachment_path",      "TEXT NOT NULL DEFAULT ''")
     conn.commit()
     conn.close()
 
@@ -88,18 +90,22 @@ def insert_ticket(
     team: str,
     summary: str,
     recommended_action: str,
+    attachment_filename: str = "",
+    attachment_path: str = "",
 ) -> int:
     conn = get_connection()
     cur = conn.execute(
         """INSERT INTO tickets
            (user_name, department, message, keywords, category, priority,
-            team, summary, recommended_action, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Neu')""",
+            team, summary, recommended_action, status,
+            attachment_filename, attachment_path)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Neu', ?, ?)""",
         (
             user_name, department, message,
             ", ".join(keywords),
             category, priority, team,
             summary, recommended_action,
+            attachment_filename, attachment_path,
         ),
     )
     ticket_id = cur.lastrowid

@@ -5,6 +5,7 @@ services:
       - "8000:8000"
     volumes:
       - ./data:/project/data
+      - ./uploads:/project/uploads
     env_file:
       - .env
     restart: unless-stopped

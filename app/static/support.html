@@ -42,7 +42,15 @@
     </div>
 
     <div class="card form-card">
-      <form id="support-form" action="/submit" method="post">
+
+      <div id="upload-error-type" class="login-error" style="display:none;">
+        Ungültiger Dateityp. Erlaubt sind: PNG, JPG, PDF, TXT, LOG (max. 10 MB).
+      </div>
+      <div id="upload-error-size" class="login-error" style="display:none;">
+        Die Datei ist zu gross. Maximum: 10 MB.
+      </div>
+
+      <form id="support-form" action="/submit" method="post" enctype="multipart/form-data">
 
         <div class="form-row-grid">
           <div class="form-field">
@@ -62,6 +70,13 @@
           <textarea id="message" name="message"
                     placeholder="Was ist das Problem? Seit wann tritt es auf? Gibt es eine Fehlermeldung? Was hast du bereits versucht?"
                     required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="file">Anhang (optional)</label>
+          <input type="file" id="file" name="file"
+                 accept=".png,.jpg,.jpeg,.pdf,.txt,.log" />
+          <p class="field-hint">PNG, JPG, PDF, TXT, LOG &mdash; max. 10 MB</p>
         </div>
 
         <div class="form-submit">
@@ -88,6 +103,12 @@
   }).catch(() => {});
 
   const params = new URLSearchParams(window.location.search);
+  if (params.get("error") === "upload_type") {
+    document.getElementById("upload-error-type").style.display = "block";
+  }
+  if (params.get("error") === "upload_size") {
+    document.getElementById("upload-error-size").style.display = "block";
+  }
   if (params.get("success") === "1") {
     const ticketId = params.get("id") ?? "–";
     document.getElementById("ticket-id-display").textContent = "#" + ticketId;

@@ -1,8 +1,9 @@
 import os
+import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Form, HTTPException, Request, UploadFile, File
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,6 +22,10 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+UPLOAD_DIR        = Path("uploads")
+ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".pdf", ".txt", ".log"}
+MAX_FILE_BYTES     = 10 * 1024 * 1024  # 10 MB
+
 
 @app.on_event("startup")
 def startup():
@@ -30,6 +35,7 @@ def startup():
         ("support", auth.hash_password("support123"), "support"),
         ("user",    auth.hash_password("user123"),    "user"),
     ])
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ── Health (no auth) ────────────────────────────────────────────────────────
@@ -69,8 +75,6 @@ def logout(request: Request):
     return RedirectResponse("/login", status_code=302)
 
 
-# ── Current user API (used by navbar JS) ────────────────────────────────────
-
 @app.get("/api/me")
 def me(request: Request):
     user = auth.current_user(request)
@@ -89,15 +93,33 @@ def support_page(request: Request):
 
 
 @app.post("/submit")
-def submit_ticket(
+async def submit_ticket(
     request: Request,
     user_name: str = Form(...),
     department: str = Form(...),
     message: str = Form(...),
+    file: UploadFile | None = File(default=None),
 ):
     if redirect := auth.require_login(request):
         return redirect
 
+    # ── File upload ──────────────────────────────────────────────────────────
+    attachment_filename = ""
+    attachment_path     = ""
+
+    if file and file.filename:
+        ext = Path(file.filename).suffix.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            return RedirectResponse("/support?error=upload_type", status_code=302)
+        content = await file.read()
+        if len(content) > MAX_FILE_BYTES:
+            return RedirectResponse("/support?error=upload_size", status_code=302)
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        (UPLOAD_DIR / unique_name).write_bytes(content)
+        attachment_filename = file.filename
+        attachment_path     = unique_name
+
+    # ── Ticket analysis ──────────────────────────────────────────────────────
     ai_result = openai_client.analyze(user_name, department, message)
     if ai_result:
         local     = analyzer.analyze(message)
@@ -126,8 +148,23 @@ def submit_ticket(
         team=team,
         summary=summary,
         recommended_action=recommended_action,
+        attachment_filename=attachment_filename,
+        attachment_path=attachment_path,
     )
     return RedirectResponse(url=f"/support?success=1&id={ticket_id}", status_code=303)
+
+
+# ── File download (login required) ──────────────────────────────────────────
+
+@app.get("/uploads/{filename}")
+def download_upload(filename: str, request: Request):
+    if redirect := auth.require_login(request):
+        return redirect
+    safe_name = Path(filename).name  # prevent path traversal
+    file_path = UPLOAD_DIR / safe_name
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Datei nicht gefunden")
+    return FileResponse(file_path, filename=safe_name)
 
 
 # ── Admin (nur support + admin Rolle) ───────────────────────────────────────

@@ -366,6 +366,18 @@ body {
   line-height: 1.6;
 }
 
+.form-field input[type="file"] {
+  padding: 6px 10px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.field-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 5px;
+}
+
 .form-submit {
   margin-top: 4px;
 }
@@ -513,9 +525,10 @@ table tbody td {
   white-space: nowrap;
 }
 
-.badge-hoch    { background: #fee2e2; color: #b91c1c; }
-.badge-mittel  { background: #fef3c7; color: #92400e; }
-.badge-niedrig { background: #d1fae5; color: #065f46; }
+.badge-hoch       { background: #fee2e2; color: #b91c1c; }
+.badge-mittel     { background: #fef3c7; color: #92400e; }
+.badge-niedrig    { background: #d1fae5; color: #065f46; }
+.badge-attachment { background: #e0e7ff; color: #3730a3; }
 
 .status-pill {
   display: inline-block;

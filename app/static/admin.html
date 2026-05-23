@@ -82,11 +82,12 @@
             <th>Status</th>
             <th>Team</th>
             <th>Erstellt</th>
+            <th>Anhang</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="ticket-body">
-          <tr><td colspan="9" class="table-empty">Lade Tickets…</td></tr>
+          <tr><td colspan="10" class="table-empty">Lade Tickets…</td></tr>
         </tbody>
       </table>
     </div>
@@ -144,6 +145,14 @@
           <p id="save-feedback" class="save-feedback" style="display:none;"></p>
         </div>
 
+      </div>
+
+      <!-- Anhang -->
+      <div class="detail-section" id="detail-attachment-section" style="display:none;">
+        <div class="detail-section-label">Anhang</div>
+        <a id="detail-attachment-link" href="#" class="btn btn-outline" style="width:fit-content;">
+          Datei herunterladen
+        </a>
       </div>
 
       <!-- Zusammenfassung + Empfohlene Aktion -->
@@ -220,7 +229,7 @@
   function renderTable(tickets) {
     const tbody = document.getElementById("ticket-body");
     if (!tickets.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="table-empty">Keine Tickets gefunden.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="table-empty">Keine Tickets gefunden.</td></tr>';
       return;
     }
     tbody.innerHTML = tickets.map(t => `
@@ -233,6 +242,7 @@
         <td><span class="status-pill ${STATUS_MAP[t.status] || ""}">${esc(t.status)}</span></td>
         <td>${esc(t.team)}</td>
         <td class="col-date">${esc((t.created_at || "").slice(0, 16))}</td>
+        <td>${t.attachment_path ? '<span class="badge badge-attachment">Ja</span>' : '<span class="col-date">–</span>'}</td>
         <td>
           <button class="btn-link-inline" onclick="event.stopPropagation(); showDetail(${t.id})">
             Details
@@ -263,6 +273,16 @@
     sel.innerHTML = STATUSES.map(s =>
       `<option value="${s}" ${s === t.status ? "selected" : ""}>${s}</option>`
     ).join("");
+
+    const attachSection = document.getElementById("detail-attachment-section");
+    const attachLink    = document.getElementById("detail-attachment-link");
+    if (t.attachment_path) {
+      attachLink.href        = `/uploads/${esc(t.attachment_path)}`;
+      attachLink.textContent = t.attachment_filename || "Datei herunterladen";
+      attachSection.style.display = "block";
+    } else {
+      attachSection.style.display = "none";
+    }
 
     document.getElementById("save-feedback").style.display = "none";
 
