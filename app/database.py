@@ -20,6 +20,35 @@ def _add_column(conn, column: str, definition: str):
         pass  # column already exists
 
 
+def init_users(default_users: list[tuple[str, str, str]]):
+    """Create users table and seed default accounts (username, password_hash, role)."""
+    conn = get_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            username      TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role          TEXT NOT NULL DEFAULT 'user'
+        )
+    """)
+    for username, password_hash, role in default_users:
+        conn.execute(
+            "INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            (username, password_hash, role),
+        )
+    conn.commit()
+    conn.close()
+
+
+def get_user(username: str) -> dict | None:
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
 def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_connection()

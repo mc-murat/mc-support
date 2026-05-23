@@ -15,7 +15,8 @@
     <a href="/support">Support</a>
     <a href="/admin" class="active">Admin</a>
   </div>
-  <span class="navbar-right">IT Dashboard</span>
+  <span class="navbar-right" id="navbar-user"></span>
+  <a href="/logout" class="navbar-logout">Abmelden</a>
 </nav>
 
 <div class="container">
@@ -317,6 +318,10 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
+
+  fetch("/api/me").then(r => r.json()).then(u => {
+    document.getElementById("navbar-user").textContent = u.username + " (" + u.role + ")";
+  }).catch(() => {});
 
   loadAll();
 </script>

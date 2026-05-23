@@ -2,6 +2,16 @@
 
 Internes IT-Support-Ticketsystem für Mitarbeitende. Entwickelt im Rahmen von Modul 300.
 
+## Login – Test-Zugangsdaten
+
+| Benutzer  | Passwort     | Rolle     | Zugriff              |
+|-----------|--------------|-----------|----------------------|
+| `admin`   | `admin123`   | admin     | /support + /admin    |
+| `support` | `support123` | support   | /support + /admin    |
+| `user`    | `user123`    | user      | nur /support         |
+
+Nicht eingeloggte Benutzer werden automatisch zu `/login` weitergeleitet.
+
 ## Features
 
 - Supportformular für Mitarbeitende (`/support`)

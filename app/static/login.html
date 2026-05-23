@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MC-SUPPORT – Login</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-logo">MC-SUPPORT</span>
+  <span class="navbar-divider"></span>
+  <span class="navbar-right">IT Helpdesk</span>
+</nav>
+
+<div class="container-sm">
+  <div class="page-intro">
+    <h1>Anmelden</h1>
+    <p>Bitte melde dich mit deinen Zugangsdaten an.</p>
+  </div>
+
+  <div class="card form-card">
+
+    <div id="error-msg" class="login-error" style="display:none;">
+      Benutzername oder Passwort falsch. Bitte erneut versuchen.
+    </div>
+
+    <form action="/login" method="post">
+      <input type="hidden" name="next" id="next-field" value="/support" />
+
+      <div class="form-field">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="username"
+               placeholder="Benutzername" required autocomplete="username" />
+      </div>
+
+      <div class="form-field">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password"
+               placeholder="Passwort" required autocomplete="current-password" />
+      </div>
+
+      <div class="form-submit">
+        <button type="submit">Anmelden</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("error") === "1") {
+    document.getElementById("error-msg").style.display = "block";
+  }
+  const next = params.get("next");
+  if (next) {
+    document.getElementById("next-field").value = next;
+  }
+</script>
+
+</body>
+</html>

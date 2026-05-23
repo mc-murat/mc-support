@@ -73,11 +73,34 @@ body {
 
 .navbar-right {
   margin-left: auto;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+.navbar-logout {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-left: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navbar-logout:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.login-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  margin-bottom: 16px;
 }
 
 /* ── Containers ─────────────────────────────────────────────────────────── */
