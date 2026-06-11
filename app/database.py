@@ -77,8 +77,16 @@ def init_db():
     _add_column(conn, "attachment_filename",  "TEXT NOT NULL DEFAULT ''")
     _add_column(conn, "attachment_path",      "TEXT NOT NULL DEFAULT ''")
     _add_column(conn, "solution_steps",       "TEXT NOT NULL DEFAULT ''")
+    _add_column(conn, "email",                "TEXT NOT NULL DEFAULT ''")
     conn.commit()
     conn.close()
+
+
+def get_ticket(ticket_id: int) -> dict | None:
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 
 def insert_ticket(
@@ -94,21 +102,22 @@ def insert_ticket(
     attachment_filename: str = "",
     attachment_path: str = "",
     solution_steps: str = "",
+    email: str = "",
 ) -> int:
     conn = get_connection()
     cur = conn.execute(
         """INSERT INTO tickets
            (user_name, department, message, keywords, category, priority,
             team, summary, recommended_action, status,
-            attachment_filename, attachment_path, solution_steps)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Neu', ?, ?, ?)""",
+            attachment_filename, attachment_path, solution_steps, email)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Neu', ?, ?, ?, ?)""",
         (
             user_name, department, message,
             ", ".join(keywords),
             category, priority, team,
             summary, recommended_action,
             attachment_filename, attachment_path,
-            solution_steps,
+            solution_steps, email,
         ),
     )
     ticket_id = cur.lastrowid

@@ -12,6 +12,7 @@ import app.database as db
 import app.analyzer as analyzer
 import app.openai_client as openai_client
 import app.knowledge_base as knowledge_base
+import app.email_client as email_client
 import app.auth as auth
 
 app = FastAPI(title="mc-support")
@@ -98,6 +99,7 @@ async def submit_ticket(
     request: Request,
     user_name: str = Form(...),
     department: str = Form(...),
+    email: str = Form(default=""),
     message: str = Form(...),
     file: UploadFile | None = File(default=None),
 ):
@@ -154,6 +156,15 @@ async def submit_ticket(
         attachment_filename=attachment_filename,
         attachment_path=attachment_path,
         solution_steps=solution_steps,
+        email=email.strip(),
+    )
+    email_client.send_ticket_created(
+        to=email.strip(),
+        ticket_id=ticket_id,
+        category=category,
+        priority=priority,
+        status="Neu",
+        summary=summary,
     )
     return RedirectResponse(url=f"/support?success=1&id={ticket_id}", status_code=303)
 
@@ -209,4 +220,12 @@ def update_ticket_status(ticket_id: int, body: StatusUpdate, request: Request):
         db.update_status(ticket_id, body.status)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    ticket = db.get_ticket(ticket_id)
+    if ticket and ticket.get("email"):
+        email_client.send_status_changed(
+            to=ticket["email"],
+            ticket_id=ticket_id,
+            new_status=body.status,
+            team=ticket.get("team", ""),
+        )
     return {"ok": True}

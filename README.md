@@ -58,6 +58,43 @@ docker compose logs --tail 50
 docker compose up -d --build
 ```
 
+## E-Mail Benachrichtigungen (optional)
+
+Ohne SMTP-Konfiguration läuft die App weiterhin fehlerfrei — E-Mails werden dann nur geloggt und nicht gesendet.
+
+```bash
+cp .env.example .env
+```
+
+`.env` öffnen und SMTP-Daten eintragen:
+
+```
+SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=587
+SMTP_USER=dein-user
+SMTP_PASSWORD=dein-passwort
+SMTP_FROM=mc-support@firma.ch
+```
+
+**Empfohlene Testdienste:**
+
+| Dienst   | Beschreibung                                                      |
+|----------|-------------------------------------------------------------------|
+| [Mailtrap](https://mailtrap.io) | Sandboxed SMTP für Entwicklung — E-Mails landen in einer Inbox, nicht beim Empfänger |
+| Gmail    | SMTP über `smtp.gmail.com:587` mit App-Passwort (2FA aktivieren) |
+
+**Wann werden E-Mails gesendet:**
+- Bei Ticketerstellung: Ticket-ID, Kategorie, Priorität, Status, Zusammenfassung
+- Bei Statusänderung: neuer Status, Ticket-ID, zuständiges Team
+
+Das E-Mail-Feld im Supportformular ist optional. Ohne Angabe werden keine E-Mails gesendet.
+
+Danach Container neu bauen:
+
+```bash
+docker compose up -d --build
+```
+
 ## OpenAI API Key (optional)
 
 Ohne API Key läuft die App weiterhin mit lokaler Keyword-Analyse.
